@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { daysBetween, formatDate, isJourneyDate, type LocalDate } from "../../domain/journeys";
 import type { Frequency } from "../../domain/habits";
-import type { CompletionAction } from "../../domain/sync-contract";
 import type { HabitRepository, JourneySnapshot } from "../../data/habitforge-repository";
 
 export interface TrackerHabit {
@@ -16,6 +15,8 @@ export function useHabitState(repository: HabitRepository | null) {
   const [selectedDate, setSelectedDate] = useState<LocalDate | null>(null);
   const [syncState, setSyncState] = useState<"pending-local" | "syncing" | "synced" | "failed">("syncing");
   const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const entriesRef = useRef<Record<string, boolean>>({});
+  const mutationQueue = useRef(Promise.resolve());
 
   useEffect(() => () => {
     if (noteTimer.current) clearTimeout(noteTimer.current);
@@ -31,6 +32,7 @@ export function useHabitState(repository: HabitRepository | null) {
     repository.loadSnapshot().then((loaded) => {
       if (!active) return;
       setSnapshot(loaded);
+      entriesRef.current = loaded.entries;
       setSelectedDate((current) => current ?? loaded.journey.startDate);
       setSyncState("synced");
     }).catch(() => {
@@ -62,31 +64,40 @@ export function useHabitState(repository: HabitRepository | null) {
   }
 
   async function runMutation(mutation: () => Promise<unknown>) {
-    setSyncState("pending-local");
-    try {
-      await mutation();
-      const refreshed = await repository?.loadSnapshot();
-      if (refreshed) setSnapshot(refreshed);
-      setSyncState("synced");
-    } catch {
-      setSyncState("failed");
-    }
+    mutationQueue.current = mutationQueue.current.then(async () => {
+      setSyncState("pending-local");
+      try {
+        await mutation();
+        const refreshed = await repository?.loadSnapshot();
+        if (refreshed) {
+          entriesRef.current = refreshed.entries;
+          setSnapshot(refreshed);
+        }
+        setSyncState("synced");
+      } catch {
+        setSyncState("failed");
+      }
+    });
+    await mutationQueue.current;
   }
 
   function toggleHabit(habitId: string) {
     const habit = habits.find((candidate) => candidate.id === habitId);
     if (!habit || !repository) return;
-    const action: CompletionAction = {
+    const entryKey = `${date}:${habitId}`;
+    const nextCompleted = !entriesRef.current[entryKey];
+    entriesRef.current = { ...entriesRef.current, [entryKey]: nextCompleted };
+    setSnapshot((current) => current ? { ...current, entries: entriesRef.current } : current);
+    void runMutation(() => repository.setCompletion({
       kind: "set-completion",
       operationId: crypto.randomUUID(),
       journeyId: journey.id,
       habitId,
       habitVersionId: habit.versionId,
       date,
-      completed: !completed[`${date}:${habitId}`],
+      completed: nextCompleted,
       baseRevision: 1,
-    };
-    void runMutation(() => repository.setCompletion(action));
+    }));
   }
 
   function markAll() {

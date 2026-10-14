@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AuthClient } from "../data/auth";
 import { authClient, supabase } from "../data/supabase-client";
 import { createSeededHabitRepository, createSupabaseHabitRepository, type HabitRepository } from "../data/habitforge-repository";
@@ -9,8 +9,6 @@ import { Tracker } from "../routes/tracker/Tracker";
 import { useHabitState } from "../components/habits/useHabitState";
 
 type Route = "dashboard" | "tracker";
-const demoRepository = createSeededHabitRepository();
-const supabaseRepository = supabase ? createSupabaseHabitRepository(supabase) : null;
 
 function routeFromLocation(): Route {
   return window.location.pathname.startsWith("/tracker") ? "tracker" : "dashboard";
@@ -23,10 +21,10 @@ const demoAuthClient: AuthClient = {
   async signOut() {},
 };
 
-export function App({ client = authClient, repository = supabaseRepository }: { client?: AuthClient | null; repository?: HabitRepository | null }) {
+export function App({ client = authClient, repository = null }: { client?: AuthClient | null; repository?: HabitRepository | null }) {
   const [route, setRoute] = useState<Route>(routeFromLocation);
   const [localPreview] = useState(import.meta.env.DEV && new URLSearchParams(window.location.search).has("demo"));
-  const habitState = useHabitState(localPreview ? demoRepository : repository);
+  const [demoRepository] = useState(createSeededHabitRepository);
 
   useEffect(() => {
     const onPopState = () => setRoute(routeFromLocation());
@@ -42,13 +40,55 @@ export function App({ client = authClient, repository = supabaseRepository }: { 
 
   return (
     <AuthGate client={localPreview ? demoAuthClient : client}>
-      {() => (
-        !localPreview && !repository ? <main className="auth-page"><p className="sync-copy">Journey persistence is not configured.</p></main> :
-        habitState.loading ? <main className="auth-page"><p className="sync-copy">Loading your journey...</p></main> :
-          <AppShell route={route} onNavigate={navigate}>
-            {route === "tracker" ? <Tracker state={habitState} /> : <Dashboard state={habitState} onNavigate={navigate} />}
-          </AppShell>
-      )}
+      {(session) => <AuthenticatedBoundary
+        route={route}
+        onNavigate={navigate}
+        sessionId={session.userId}
+        localPreview={localPreview}
+        demoRepository={demoRepository}
+        repository={repository}
+      />}
     </AuthGate>
+  );
+}
+
+function AuthenticatedBoundary({
+  route,
+  onNavigate,
+  sessionId,
+  localPreview,
+  demoRepository,
+  repository,
+}: {
+  route: Route;
+  onNavigate: (route: Route) => void;
+  sessionId: string;
+  localPreview: boolean;
+  demoRepository: HabitRepository;
+  repository: HabitRepository | null;
+}) {
+  const sessionRepository = useMemo(
+    () => (localPreview ? demoRepository : repository ?? (supabase ? createSupabaseHabitRepository(supabase) : null)),
+    [localPreview, demoRepository, repository, sessionId],
+  );
+  return <AuthenticatedApp route={route} onNavigate={onNavigate} repository={sessionRepository} />;
+}
+
+function AuthenticatedApp({
+  route,
+  onNavigate,
+  repository,
+}: {
+  route: Route;
+  onNavigate: (route: Route) => void;
+  repository: HabitRepository | null;
+}) {
+  const habitState = useHabitState(repository);
+  if (!repository) return <main className="auth-page"><p className="sync-copy">Journey persistence is not configured.</p></main>;
+  if (habitState.loading) return <main className="auth-page"><p className="sync-copy">Loading your journey...</p></main>;
+  return (
+    <AppShell route={route} onNavigate={onNavigate}>
+      {route === "tracker" ? <Tracker state={habitState} /> : <Dashboard state={habitState} onNavigate={onNavigate} />}
+    </AppShell>
   );
 }
