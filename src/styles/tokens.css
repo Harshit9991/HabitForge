@@ -1,0 +1,26 @@
+:root {
+  color-scheme: dark;
+  --forge-950: #080d10;
+  --forge-900: #0b1115;
+  --forge-850: #10181d;
+  --forge-800: #152128;
+  --forge-700: #203039;
+  --frost: #d7e6e8;
+  --muted: #8ea4a8;
+  --cyan: #8ce4e5;
+  --amber: #efb46e;
+  --ember: #db6d46;
+  --line: rgba(190, 224, 225, 0.17);
+  --line-strong: rgba(190, 224, 225, 0.32);
+  --radius: 3px;
+  --space-1: 0.35rem;
+  --space-2: 0.6rem;
+  --space-3: 0.9rem;
+  --space-4: 1.25rem;
+  --space-5: 1.75rem;
+  --space-6: 2.5rem;
+  --space-7: 4rem;
+  --content-width: 1180px;
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", monospace;
+}
