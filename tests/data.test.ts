@@ -31,6 +31,6 @@ describe("repository errors", () => {
       rpc: vi.fn(),
     };
     const repository = new HabitForgeRepository(client);
-    await expect(repository.setCompletion({ kind: "set-completion", operationId: "op", habitId: "h", date: "2026-01-15", completed: true, baseRevision: 1 })).rejects.toMatchObject({ code: "completion_write_failed" });
+    await expect(repository.setCompletion({ kind: "set-completion", operationId: "op", journeyId: "j", habitId: "h", habitVersionId: "v", date: "2026-01-15", completed: true, baseRevision: 1 })).rejects.toMatchObject({ code: "completion_write_failed" });
   });
 });

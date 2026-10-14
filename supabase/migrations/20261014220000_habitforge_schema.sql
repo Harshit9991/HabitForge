@@ -49,6 +49,7 @@ create table public.habit_versions (
   created_at timestamptz not null default now(),
   check (active_until_exclusive is null or active_until_exclusive > active_from)
 );
+create unique index habit_versions_id_habit_idx on public.habit_versions(id, habit_id);
 
 create table public.daily_habit_entries (
   id uuid primary key default gen_random_uuid(),
@@ -62,6 +63,7 @@ create table public.daily_habit_entries (
   updated_at timestamptz not null default now(),
   unique (journey_id, habit_id, local_date),
   foreign key (habit_id, journey_id) references public.habits(id, journey_id)
+  ,foreign key (habit_version_id, habit_id) references public.habit_versions(id, habit_id)
 );
 
 create table public.daily_notes (

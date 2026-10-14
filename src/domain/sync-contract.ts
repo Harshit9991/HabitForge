@@ -11,7 +11,9 @@ export interface Revision {
 export interface CompletionAction {
   kind: "set-completion";
   operationId: string;
+  journeyId: string;
   habitId: string;
+  habitVersionId: string;
   date: LocalDate;
   completed: boolean;
   baseRevision: number;

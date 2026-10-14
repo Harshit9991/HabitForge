@@ -21,10 +21,10 @@ export class HabitForgeRepository {
   async setCompletion(action: CompletionAction) {
     const { data, error } = await this.client.from("daily_habit_entries").upsert({
       habit_id: action.habitId,
+      journey_id: action.journeyId,
+      habit_version_id: action.habitVersionId,
       local_date: action.date,
       completed: action.completed,
-      operation_id: action.operationId,
-      base_revision: action.baseRevision,
     }, { onConflict: "journey_id,habit_id,local_date" });
     if (error) throw new RepositoryError("completion_write_failed", error.message);
     return data;

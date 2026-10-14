@@ -19,9 +19,9 @@ export function Tracker({ state }: { state: HabitState }) {
       <div className="tracker-layout">
         <article className="panel tracker-panel">
           <div className="panel-heading">
-            <button className="date-button" type="button" onClick={() => state.setSelectedDate("2026-01-14")} aria-label="Previous date">&lt;</button>
+            <button className="date-button" type="button" onClick={() => state.moveDate(-1)} aria-label="Previous date" disabled={state.selectedDate === state.journey.startDate}>&lt;</button>
             <span>{state.selectedDate}</span>
-            <button className="date-button" type="button" onClick={() => state.setSelectedDate("2026-01-15")} aria-label="Next date">&gt;</button>
+            <button className="date-button" type="button" onClick={() => state.moveDate(1)} aria-label="Next date" disabled={state.dayNumber === state.journeyLength}>&gt;</button>
             <span className="badge">DAY 01</span>
           </div>
           <div className="habit-list">

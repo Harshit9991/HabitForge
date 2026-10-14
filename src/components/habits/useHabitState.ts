@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { LocalDate } from "../../domain/journeys";
+import { daysBetween, formatDate, type LocalDate } from "../../domain/journeys";
 import type { Frequency } from "../../domain/habits";
 
 export interface TrackerHabit {
@@ -19,6 +19,17 @@ export function useHabitState() {
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState("");
   const completedCount = useMemo(() => initialHabits.filter((habit) => completed[`${selectedDate}:${habit.id}`]).length, [completed, selectedDate]);
+  const journey = { startDate: "2026-01-15" as LocalDate, endDateExclusive: "2026-04-15" as LocalDate, timezone: "Asia/Kolkata" };
+  const dayNumber = daysBetween(journey.startDate, selectedDate) + 1;
+  const journeyLength = daysBetween(journey.startDate, journey.endDateExclusive);
+  const progressPercent = Math.round((dayNumber / journeyLength) * 100);
+
+  function moveDate(offset: number) {
+    const [year, month, day] = selectedDate.split("-").map(Number);
+    const next = new Date(Date.UTC(year, month - 1, day + offset));
+    const candidate = formatDate(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate());
+    if (candidate >= journey.startDate && candidate < journey.endDateExclusive) setSelectedDate(candidate);
+  }
 
   function toggleHabit(habitId: string) {
     const key = `${selectedDate}:${habitId}`;
@@ -45,6 +56,11 @@ export function useHabitState() {
     habits: initialHabits,
     selectedDate,
     setSelectedDate,
+    moveDate,
+    journey,
+    dayNumber,
+    journeyLength,
+    progressPercent,
     completed,
     completedCount,
     note,

@@ -1,5 +1,5 @@
 import type { Habit } from "./habits";
-import { eligibleHabits, isHabitEligible } from "./habits";
+import { eligibleHabits } from "./habits";
 import type { Journey, LocalDate } from "./journeys";
 
 export interface Completion {
@@ -66,10 +66,5 @@ export function calculateStreak(
 
 export function weeklyQuotaMet(completions: Completion[], habit: Habit, dates: LocalDate[], quota: number): boolean {
   const completedDates = new Set(completions.filter((entry) => entry.habitId === habit.id && entry.completed).map((entry) => entry.date));
-  return dates.filter((date) => completedDates.has(date) && isHabitEligible(habit, date, {
-    id: "metric",
-    startDate: dates[0],
-    endDateExclusive: dates[dates.length - 1],
-    timezone: "UTC",
-  })).length >= quota;
+  return dates.filter((date) => completedDates.has(date)).length >= quota;
 }
