@@ -2,13 +2,13 @@ import { expect, test } from "@playwright/test";
 
 test.describe("responsive shell", () => {
   test("does not introduce horizontal overflow", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/?demo=1");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     expect(overflow).toBe(false);
   });
 
   test("keeps tracker actions available on mobile", async ({ page }) => {
-    await page.goto("/tracker");
+    await page.goto("/tracker?demo=1");
     await expect(page.getByRole("button", { name: "Mark all complete" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Reset day" })).toBeVisible();
     const mobileNavigation = page.getByRole("navigation", { name: "Mobile navigation" });

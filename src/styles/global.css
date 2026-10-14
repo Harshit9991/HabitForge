@@ -61,6 +61,13 @@ h1 { max-width: 680px; margin: .45rem 0 .7rem; color: var(--frost); font-size: c
 .note-panel label { display: block; margin: 2rem 0 .6rem; color: var(--muted); font-size: .75rem; }
 textarea { width: 100%; resize: vertical; padding: .8rem; border: 1px solid var(--line); border-radius: var(--radius); color: var(--frost); background: rgba(8, 13, 16, .55); line-height: 1.6; }
 .sync-copy { margin-top: 2rem; line-height: 1.5; }
+.auth-page { display: grid; min-height: 100vh; place-items: center; padding: 1.5rem; }
+.auth-card { width: min(100%, 480px); padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(135deg, rgba(32, 48, 57, .5), rgba(16, 24, 29, .8)); }
+.auth-card form { display: grid; gap: .7rem; margin-top: 2rem; }
+.auth-card label { color: var(--muted); font-size: .75rem; }
+.auth-card input { min-height: 42px; padding: .7rem; border: 1px solid var(--line); border-radius: var(--radius); color: var(--frost); background: rgba(8, 13, 16, .55); }
+.auth-card .button { margin-top: .5rem; }
+.auth-status { min-height: 1.4rem; color: var(--amber); font-size: .78rem; line-height: 1.5; }
 .mobile-nav { display: none; }
 @media (max-width: 760px) {
   .topbar { height: 64px; padding: 0 1.1rem; }

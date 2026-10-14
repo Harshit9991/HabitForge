@@ -1,11 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
-import { isSessionExpired } from "../src/data/auth";
+import { createSupabaseAuthClient, isSessionExpired } from "../src/data/auth";
 import { HabitForgeRepository } from "../src/data/habitforge-repository";
 import { SyncOutbox } from "../src/data/sync-outbox";
 
 describe("auth lifecycle", () => {
   it("recognizes expired sessions before replay", () => {
     expect(isSessionExpired({ userId: "u1", accessToken: "token", expiresAt: 100 }, 100)).toBe(true);
+  });
+
+  it("maps Supabase sessions to the app session contract", async () => {
+    const api = {
+      auth: {
+        getSession: vi.fn(async () => ({ data: { session: { user: { id: "u1" }, access_token: "token", expires_at: 200 } }, error: null })),
+        signInWithPassword: vi.fn(),
+        signUp: vi.fn(),
+        signOut: vi.fn(async () => ({ error: null })),
+      },
+    };
+    const client = createSupabaseAuthClient(api);
+    await expect(client.getSession()).resolves.toEqual({ userId: "u1", accessToken: "token", expiresAt: 200000 });
   });
 });
 
