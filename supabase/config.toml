@@ -1,0 +1,9 @@
+project_id = "habitforge"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:4173"
+additional_redirect_urls = ["http://localhost:4173"]
+
+[db]
+major_version = 15
