@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import type { LocalDate } from "../../domain/journeys";
+import type { Frequency } from "../../domain/habits";
 
 export interface TrackerHabit {
   id: string;
   label: string;
-  frequency: string;
+  frequency: Frequency["kind"];
 }
 
 const initialHabits: TrackerHabit[] = [
@@ -17,8 +18,7 @@ export function useHabitState() {
   const [selectedDate, setSelectedDate] = useState<LocalDate>("2026-01-15");
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState("");
-  const habits = initialHabits;
-  const completedCount = useMemo(() => habits.filter((habit) => completed[`${selectedDate}:${habit.id}`]).length, [completed, habits, selectedDate]);
+  const completedCount = useMemo(() => initialHabits.filter((habit) => completed[`${selectedDate}:${habit.id}`]).length, [completed, selectedDate]);
 
   function toggleHabit(habitId: string) {
     const key = `${selectedDate}:${habitId}`;
@@ -26,16 +26,23 @@ export function useHabitState() {
   }
 
   function markAll() {
-    setCompleted((current) => Object.fromEntries([...Object.entries(current), ...habits.map((habit) => [`${selectedDate}:${habit.id}`, true])]));
+    setCompleted((current) => {
+      const today = Object.fromEntries(initialHabits.map((habit) => [`${selectedDate}:${habit.id}`, true]));
+      if (initialHabits.every((habit) => current[`${selectedDate}:${habit.id}`])) return current;
+      return { ...current, ...today };
+    });
   }
 
   function reset() {
-    setCompleted((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !key.startsWith(`${selectedDate}:`))));
+    setCompleted((current) => {
+      const next = Object.fromEntries(Object.entries(current).filter(([key]) => !key.startsWith(`${selectedDate}:`)));
+      return Object.keys(next).length === Object.keys(current).length ? current : next;
+    });
     setNote("");
   }
 
   return {
-    habits,
+    habits: initialHabits,
     selectedDate,
     setSelectedDate,
     completed,

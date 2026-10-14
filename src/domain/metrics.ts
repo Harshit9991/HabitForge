@@ -31,11 +31,12 @@ export function calculateDailyMetrics(
   settings: MetricSettings,
 ): DailyMetrics {
   const eligible = eligibleHabits(habits, journey, date);
-  const completedIds = new Set(completions.filter((entry) => entry.date === date && entry.completed).map((entry) => entry.habitId));
+  const dateCompletions = new Map(completions.filter((entry) => entry.date === date).map((entry) => [entry.habitId, entry]));
+  const completedIds = new Set([...dateCompletions.values()].filter((entry) => entry.completed).map((entry) => entry.habitId));
   const groupCounts: DailyMetrics["groupCounts"] = {};
   let completed = 0;
   for (const habit of eligible) {
-    const groupId = habit.versions.find((version) => version.id === completions.find((entry) => entry.habitId === habit.id)?.versionId)?.groupId ?? "ungrouped";
+    const groupId = habit.versions.find((version) => version.id === dateCompletions.get(habit.id)?.versionId)?.groupId ?? "ungrouped";
     groupCounts[groupId] ??= { completed: 0, eligible: 0 };
     groupCounts[groupId].eligible += 1;
     if (completedIds.has(habit.id)) {

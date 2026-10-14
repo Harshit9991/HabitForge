@@ -28,7 +28,7 @@ export function App() {
 
   return (
     <AppShell route={route} onNavigate={navigate}>
-      {route === "tracker" ? <Tracker state={habitState} /> : <Dashboard state={habitState} />}
+      {route === "tracker" ? <Tracker state={habitState} /> : <Dashboard state={habitState} onNavigate={navigate} />}
     </AppShell>
   );
 }

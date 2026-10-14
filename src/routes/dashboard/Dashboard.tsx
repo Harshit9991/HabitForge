@@ -2,7 +2,7 @@ import type { useHabitState } from "../../components/habits/useHabitState";
 
 type HabitState = ReturnType<typeof useHabitState>;
 
-export function Dashboard({ state }: { state: HabitState }) {
+export function Dashboard({ state, onNavigate }: { state: HabitState; onNavigate: (route: "dashboard" | "tracker") => void }) {
   return (
     <section className="route-view" aria-labelledby="dashboard-title">
       <div className="page-heading">
@@ -24,7 +24,7 @@ export function Dashboard({ state }: { state: HabitState }) {
           <div className="panel-heading"><span>Today</span><span className="badge">LOCAL</span></div>
           <p className="today-date">Tuesday, October 14</p>
           <p className="today-subtitle">One deliberate action is enough to keep the chain alive.</p>
-          <a className="button button-secondary" href="/tracker">Open daily tracker <span aria-hidden="true">-&gt;</span></a>
+          <a className="button button-secondary" href="/tracker" onClick={(event) => { event.preventDefault(); onNavigate("tracker"); }}>Open daily tracker <span aria-hidden="true">-&gt;</span></a>
         </article>
         <article className="panel overview-panel">
           <div className="panel-heading"><span>Habit overview</span><span className="mono">{state.completedCount} / {state.habits.length}</span></div>

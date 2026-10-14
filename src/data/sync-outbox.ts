@@ -11,8 +11,12 @@ export interface QueuedAction {
 export class SyncOutbox {
   private queue = new Map<string, QueuedAction>();
 
+  private key(userId: string, sessionGeneration: string, action: SyncAction): string {
+    return `${userId}:${sessionGeneration}:${actionKey(action)}`;
+  }
+
   enqueue(action: SyncAction, userId: string, sessionGeneration: string): QueuedAction {
-    const key = `${userId}:${sessionGeneration}:${actionKey(action)}`;
+    const key = this.key(userId, sessionGeneration, action);
     const current = this.queue.get(key);
     if (current) return current;
     const queued = { action, userId, sessionGeneration, state: "pending-local" as const, attempts: 0 };
@@ -25,7 +29,7 @@ export class SyncOutbox {
   }
 
   markSyncing(action: SyncAction, userId: string, sessionGeneration: string) {
-    const item = this.queue.get(`${userId}:${sessionGeneration}:${actionKey(action)}`);
+    const item = this.queue.get(this.key(userId, sessionGeneration, action));
     if (item) {
       item.state = "syncing";
       item.attempts += 1;
@@ -33,11 +37,11 @@ export class SyncOutbox {
   }
 
   markSynced(action: SyncAction, userId: string, sessionGeneration: string) {
-    this.queue.delete(`${userId}:${sessionGeneration}:${actionKey(action)}`);
+    this.queue.delete(this.key(userId, sessionGeneration, action));
   }
 
   markFailed(action: SyncAction, userId: string, sessionGeneration: string) {
-    const item = this.queue.get(`${userId}:${sessionGeneration}:${actionKey(action)}`);
+    const item = this.queue.get(this.key(userId, sessionGeneration, action));
     if (item) item.state = "failed";
   }
 

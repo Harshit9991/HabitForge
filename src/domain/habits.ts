@@ -27,14 +27,19 @@ export interface Habit {
 export function isHabitEligible(habit: Habit, date: LocalDate, journey: Journey): boolean {
   if (habit.archived || !journey.startDate || date < journey.startDate || date >= journey.endDateExclusive) return false;
   const version = versionForDate(habit, date);
-  if (!version || date < version.activeFrom || (version.activeUntilExclusive && date >= version.activeUntilExclusive)) return false;
+  if (!version) return false;
   return isFrequencyEligible(version.frequency, date);
 }
 
 export function versionForDate(habit: Habit, date: LocalDate): HabitVersion | null {
-  return habit.versions
-    .filter((version) => version.activeFrom <= date && (!version.activeUntilExclusive || date < version.activeUntilExclusive))
-    .sort((a, b) => b.activeFrom.localeCompare(a.activeFrom))[0] ?? null;
+  let current: HabitVersion | null = null;
+  for (const version of habit.versions) {
+    if (version.activeFrom <= date && (!version.activeUntilExclusive || date < version.activeUntilExclusive) &&
+      (!current || version.activeFrom > current.activeFrom)) {
+      current = version;
+    }
+  }
+  return current;
 }
 
 export function isFrequencyEligible(frequency: Frequency, date: LocalDate): boolean {

@@ -48,7 +48,7 @@ begin
     into result from operation_receipts where operation_id = p_operation_id and owner_id = auth.uid();
   if (result->>'state' = 'completed') then return result; end if;
   update daily_habit_entries set completed = true, revision = revision + 1, updated_at = now()
-    where journey_id = p_journey_id and local_date = p_local_date;
+    where journey_id = p_journey_id and local_date = p_local_date and completed is distinct from true;
   update operation_receipts set state = 'completed', result = jsonb_build_object('date', p_local_date), completed_at = now()
     where operation_id = p_operation_id and owner_id = auth.uid();
   return jsonb_build_object('operation_id', p_operation_id, 'state', 'completed', 'date', p_local_date);
