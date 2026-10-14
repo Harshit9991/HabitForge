@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AuthClient } from "../data/auth";
-import { authClient } from "../data/supabase-client";
-import { createSeededHabitRepository, type HabitRepository } from "../data/habitforge-repository";
+import { authClient, supabase } from "../data/supabase-client";
+import { createSeededHabitRepository, createSupabaseHabitRepository, type HabitRepository } from "../data/habitforge-repository";
 import { AuthGate } from "../components/auth/AuthGate";
 import { AppShell } from "../components/shell/AppShell";
 import { Dashboard } from "../routes/dashboard/Dashboard";
@@ -10,6 +10,7 @@ import { useHabitState } from "../components/habits/useHabitState";
 
 type Route = "dashboard" | "tracker";
 const demoRepository = createSeededHabitRepository();
+const supabaseRepository = supabase ? createSupabaseHabitRepository(supabase) : null;
 
 function routeFromLocation(): Route {
   return window.location.pathname.startsWith("/tracker") ? "tracker" : "dashboard";
@@ -22,9 +23,9 @@ const demoAuthClient: AuthClient = {
   async signOut() {},
 };
 
-export function App({ client = authClient, repository = null }: { client?: AuthClient | null; repository?: HabitRepository | null }) {
+export function App({ client = authClient, repository = supabaseRepository }: { client?: AuthClient | null; repository?: HabitRepository | null }) {
   const [route, setRoute] = useState<Route>(routeFromLocation);
-  const localPreview = import.meta.env.DEV && new URLSearchParams(window.location.search).has("demo");
+  const [localPreview] = useState(import.meta.env.DEV && new URLSearchParams(window.location.search).has("demo"));
   const habitState = useHabitState(localPreview ? demoRepository : repository);
 
   useEffect(() => {

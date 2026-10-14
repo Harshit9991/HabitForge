@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { daysBetween, formatDate, type LocalDate } from "../../domain/journeys";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { daysBetween, formatDate, isJourneyDate, type LocalDate } from "../../domain/journeys";
 import type { Frequency } from "../../domain/habits";
 import type { CompletionAction } from "../../domain/sync-contract";
 import type { HabitRepository, JourneySnapshot } from "../../data/habitforge-repository";
@@ -15,6 +15,11 @@ export function useHabitState(repository: HabitRepository | null) {
   const [snapshot, setSnapshot] = useState<JourneySnapshot | null>(null);
   const [selectedDate, setSelectedDate] = useState<LocalDate | null>(null);
   const [syncState, setSyncState] = useState<"pending-local" | "syncing" | "synced" | "failed">("syncing");
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -53,7 +58,7 @@ export function useHabitState(repository: HabitRepository | null) {
     const [year, month, day] = date.split("-").map(Number);
     const next = new Date(Date.UTC(year, month - 1, day + offset));
     const candidate = formatDate(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate());
-    if (candidate >= journey.startDate && candidate < journey.endDateExclusive) setSelectedDate(candidate);
+    if (isJourneyDate(journey, candidate)) setSelectedDate(candidate);
   }
 
   async function runMutation(mutation: () => Promise<unknown>) {
@@ -94,7 +99,14 @@ export function useHabitState(repository: HabitRepository | null) {
 
   function setNote(body: string) {
     if (snapshot) setSnapshot({ ...snapshot, notes: { ...snapshot.notes, [date]: body } });
-    if (repository) void runMutation(() => repository.setNote({ date, body }));
+    if (!repository) return;
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+    setSyncState("pending-local");
+    noteTimer.current = setTimeout(() => {
+      void repository.setNote({ date, body })
+        .then(() => setSyncState("synced"))
+        .catch(() => setSyncState("failed"));
+    }, 400);
   }
 
   return {
