@@ -21,7 +21,11 @@ interface SupabaseAuthApi {
   auth: {
     getSession(): Promise<{ data: { session: SupabaseSession | null }; error: Error | null }>;
     signInWithPassword(input: { email: string; password: string }): Promise<{ data: { session: SupabaseSession | null }; error: Error | null }>;
-    signUp(input: { email: string; password: string }): Promise<{ data: { session: SupabaseSession | null }; error: Error | null }>;
+    signUp(input: {
+      email: string;
+      password: string;
+      options?: { emailRedirectTo?: string };
+    }): Promise<{ data: { session: SupabaseSession | null }; error: Error | null }>;
     signOut(): Promise<{ error: Error | null }>;
   };
 }
@@ -38,7 +42,10 @@ function toAuthSession(session: SupabaseSession | null): AuthSession | null {
   };
 }
 
-export function createSupabaseAuthClient(api: SupabaseAuthApi): AuthClient {
+export function createSupabaseAuthClient(
+  api: SupabaseAuthApi,
+  getRedirectUrl: () => string = () => window.location.origin,
+): AuthClient {
   return {
     async getSession() {
       const { data, error } = await api.auth.getSession();
@@ -53,7 +60,11 @@ export function createSupabaseAuthClient(api: SupabaseAuthApi): AuthClient {
       return session;
     },
     async signUp(email, password) {
-      const { data, error } = await api.auth.signUp({ email, password });
+      const { data, error } = await api.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: getRedirectUrl() },
+      });
       if (error) throw error;
       return { session: toAuthSession(data.session), confirmationRequired: data.session === null };
     },

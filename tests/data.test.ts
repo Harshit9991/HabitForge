@@ -20,6 +20,32 @@ describe("auth lifecycle", () => {
     const client = createSupabaseAuthClient(api);
     await expect(client.getSession()).resolves.toEqual({ userId: "u1", accessToken: "token", expiresAt: 200000 });
   });
+
+  it("uses the current app origin for confirmation links", async () => {
+    const signUp = vi.fn(async () => ({
+      data: { session: null },
+      error: null,
+    }));
+    const api = {
+      auth: {
+        getSession: vi.fn(),
+        signInWithPassword: vi.fn(),
+        signUp,
+        signOut: vi.fn(async () => ({ error: null })),
+      },
+    };
+    const client = createSupabaseAuthClient(api, () => "https://habitforge-harshit-31ed.vercel.app");
+
+    await expect(client.signUp("user@example.com", "password123")).resolves.toEqual({
+      session: null,
+      confirmationRequired: true,
+    });
+    expect(signUp).toHaveBeenCalledWith({
+      email: "user@example.com",
+      password: "password123",
+      options: { emailRedirectTo: "https://habitforge-harshit-31ed.vercel.app" },
+    });
+  });
 });
 
 describe("sync outbox", () => {
