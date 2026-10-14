@@ -1,4 +1,8 @@
-export function Dashboard() {
+import type { useHabitState } from "../../components/habits/useHabitState";
+
+type HabitState = ReturnType<typeof useHabitState>;
+
+export function Dashboard({ state }: { state: HabitState }) {
   return (
     <section className="route-view" aria-labelledby="dashboard-title">
       <div className="page-heading">
@@ -23,11 +27,9 @@ export function Dashboard() {
           <a className="button button-secondary" href="/tracker">Open daily tracker <span aria-hidden="true">-&gt;</span></a>
         </article>
         <article className="panel overview-panel">
-          <div className="panel-heading"><span>Habit overview</span><span className="mono">0 / 3</span></div>
-          <div className="overview-bar"><span style={{ width: "0%" }} /></div>
-          <div className="habit-preview"><span className="habit-icon">01</span><span>Morning movement</span><span className="muted">daily</span></div>
-          <div className="habit-preview"><span className="habit-icon">02</span><span>Deep work block</span><span className="muted">weekdays</span></div>
-          <div className="habit-preview"><span className="habit-icon">03</span><span>Evening review</span><span className="muted">daily</span></div>
+          <div className="panel-heading"><span>Habit overview</span><span className="mono">{state.completedCount} / {state.habits.length}</span></div>
+          <div className="overview-bar"><span style={{ width: `${(state.completedCount / state.habits.length) * 100}%` }} /></div>
+          {state.habits.map((habit, index) => <div className="habit-preview" key={habit.id}><span className="habit-icon">{String(index + 1).padStart(2, "0")}</span><span>{habit.label}</span><span className="muted">{habit.frequency}</span></div>)}
         </article>
       </div>
     </section>

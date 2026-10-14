@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "../components/shell/AppShell";
 import { Dashboard } from "../routes/dashboard/Dashboard";
 import { Tracker } from "../routes/tracker/Tracker";
+import { useHabitState } from "../components/habits/useHabitState";
 
 type Route = "dashboard" | "tracker";
 
@@ -11,6 +12,7 @@ function routeFromLocation(): Route {
 
 export function App() {
   const [route, setRoute] = useState<Route>(routeFromLocation);
+  const habitState = useHabitState();
 
   useEffect(() => {
     const onPopState = () => setRoute(routeFromLocation());
@@ -26,7 +28,7 @@ export function App() {
 
   return (
     <AppShell route={route} onNavigate={navigate}>
-      {route === "tracker" ? <Tracker /> : <Dashboard />}
+      {route === "tracker" ? <Tracker state={habitState} /> : <Dashboard state={habitState} />}
     </AppShell>
   );
 }

@@ -12,5 +12,7 @@ describe("HabitForge shell", () => {
 
     expect(screen.getByRole("heading", { name: "Keep the chain alive." })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Mark all complete" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Mark all complete" }));
+    expect(screen.getByLabelText("3 of 3 complete")).toBeInTheDocument();
   });
 });
