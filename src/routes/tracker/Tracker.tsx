@@ -43,7 +43,7 @@ export function Tracker({ state }: { state: HabitState }) {
           <div className="panel-heading"><span>Daily note</span><span className="muted">optional</span></div>
           <label htmlFor="daily-note">What did you learn today?</label>
           <textarea id="daily-note" rows={7} placeholder="Write a plain-text note..." value={state.note} onChange={(event) => state.setNote(event.target.value)} />
-          <SyncStatus />
+          <SyncStatus state={state.syncState} />
         </aside>
       </div>
     </section>

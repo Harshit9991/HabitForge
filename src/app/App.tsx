@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AuthClient } from "../data/auth";
 import { authClient } from "../data/supabase-client";
+import { createSeededHabitRepository, type HabitRepository } from "../data/habitforge-repository";
 import { AuthGate } from "../components/auth/AuthGate";
 import { AppShell } from "../components/shell/AppShell";
 import { Dashboard } from "../routes/dashboard/Dashboard";
@@ -8,6 +9,7 @@ import { Tracker } from "../routes/tracker/Tracker";
 import { useHabitState } from "../components/habits/useHabitState";
 
 type Route = "dashboard" | "tracker";
+const demoRepository = createSeededHabitRepository();
 
 function routeFromLocation(): Route {
   return window.location.pathname.startsWith("/tracker") ? "tracker" : "dashboard";
@@ -20,10 +22,10 @@ const demoAuthClient: AuthClient = {
   async signOut() {},
 };
 
-export function App({ client = authClient }: { client?: AuthClient | null }) {
+export function App({ client = authClient, repository = null }: { client?: AuthClient | null; repository?: HabitRepository | null }) {
   const [route, setRoute] = useState<Route>(routeFromLocation);
-  const habitState = useHabitState();
   const localPreview = import.meta.env.DEV && new URLSearchParams(window.location.search).has("demo");
+  const habitState = useHabitState(localPreview ? demoRepository : repository);
 
   useEffect(() => {
     const onPopState = () => setRoute(routeFromLocation());
@@ -40,9 +42,11 @@ export function App({ client = authClient }: { client?: AuthClient | null }) {
   return (
     <AuthGate client={localPreview ? demoAuthClient : client}>
       {() => (
-        <AppShell route={route} onNavigate={navigate}>
-          {route === "tracker" ? <Tracker state={habitState} /> : <Dashboard state={habitState} onNavigate={navigate} />}
-        </AppShell>
+        !localPreview && !repository ? <main className="auth-page"><p className="sync-copy">Journey persistence is not configured.</p></main> :
+        habitState.loading ? <main className="auth-page"><p className="sync-copy">Loading your journey...</p></main> :
+          <AppShell route={route} onNavigate={navigate}>
+            {route === "tracker" ? <Tracker state={habitState} /> : <Dashboard state={habitState} onNavigate={navigate} />}
+          </AppShell>
       )}
     </AuthGate>
   );

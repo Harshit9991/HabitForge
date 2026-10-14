@@ -1,4 +1,26 @@
 import type { CompletionAction, SyncAction } from "../domain/sync-contract";
+import type { Frequency } from "../domain/habits";
+import type { LocalDate } from "../domain/journeys";
+
+export interface JourneySnapshot {
+  journey: {
+    id: string;
+    startDate: LocalDate;
+    endDateExclusive: LocalDate;
+    timezone: string;
+  };
+  habits: Array<{ id: string; versionId: string; label: string; frequency: Frequency["kind"] }>;
+  entries: Record<string, boolean>;
+  notes: Record<string, string>;
+}
+
+export interface HabitRepository {
+  loadSnapshot(): Promise<JourneySnapshot>;
+  setCompletion(action: CompletionAction): Promise<unknown>;
+  markAll(date: LocalDate): Promise<unknown>;
+  reset(date: LocalDate): Promise<unknown>;
+  setNote(input: { date: LocalDate; body: string }): Promise<unknown>;
+}
 
 export interface RepositoryClient {
   from(table: string): {
@@ -51,4 +73,36 @@ export class HabitForgeRepository {
     if (action.kind === "set-completion") return this.setCompletion(action);
     throw new RepositoryError("unsupported_action", `Unsupported repository action: ${action.kind}`);
   }
+}
+
+export function createSeededHabitRepository(): HabitRepository {
+  const snapshot: JourneySnapshot = {
+    journey: { id: "journey-1", startDate: "2026-01-15", endDateExclusive: "2026-04-15", timezone: "Asia/Kolkata" },
+    habits: [
+      { id: "h1", versionId: "v1", label: "Morning movement", frequency: "daily" },
+      { id: "h2", versionId: "v2", label: "Deep work block", frequency: "weekdays" },
+      { id: "h3", versionId: "v3", label: "Evening review", frequency: "daily" },
+    ],
+    entries: {},
+    notes: {},
+  };
+
+  return {
+    async loadSnapshot() {
+      return structuredClone(snapshot);
+    },
+    async setCompletion(action) {
+      snapshot.entries[`${action.date}:${action.habitId}`] = action.completed;
+    },
+    async markAll(date) {
+      snapshot.habits.forEach((habit) => { snapshot.entries[`${date}:${habit.id}`] = true; });
+    },
+    async reset(date) {
+      snapshot.habits.forEach((habit) => { delete snapshot.entries[`${date}:${habit.id}`]; });
+      delete snapshot.notes[date];
+    },
+    async setNote({ date, body }) {
+      snapshot.notes[date] = body;
+    },
+  };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createSupabaseAuthClient, isSessionExpired } from "../src/data/auth";
-import { HabitForgeRepository } from "../src/data/habitforge-repository";
+import { HabitForgeRepository, createSeededHabitRepository } from "../src/data/habitforge-repository";
 import { SyncOutbox } from "../src/data/sync-outbox";
 
 describe("auth lifecycle", () => {
@@ -45,5 +45,27 @@ describe("repository errors", () => {
     };
     const repository = new HabitForgeRepository(client);
     await expect(repository.setCompletion({ kind: "set-completion", operationId: "op", journeyId: "j", habitId: "h", habitVersionId: "v", date: "2026-01-15", completed: true, baseRevision: 1 })).rejects.toMatchObject({ code: "completion_write_failed" });
+  });
+
+  describe("journey read model", () => {
+    it("persists completion and notes through the repository boundary", async () => {
+      const repository = createSeededHabitRepository();
+      const initial = await repository.loadSnapshot();
+      expect(initial.habits).toHaveLength(3);
+      await repository.setCompletion({
+        kind: "set-completion",
+        operationId: "op-1",
+        journeyId: initial.journey.id,
+        habitId: initial.habits[0].id,
+        habitVersionId: initial.habits[0].versionId,
+        date: "2026-01-15",
+        completed: true,
+        baseRevision: 1,
+      });
+      await repository.setNote({ date: "2026-01-15", body: "A useful note" });
+      const updated = await repository.loadSnapshot();
+      expect(updated.entries["2026-01-15:h1"]).toBe(true);
+      expect(updated.notes["2026-01-15"]).toBe("A useful note");
+    });
   });
 });
